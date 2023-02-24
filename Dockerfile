@@ -1,3 +1,3 @@
 ARG ARTIFACTORY
 ARG TAG_VERSION
-FROM ${ARTIFACTORY}/wordpress:${TAG_VERSION}-apache
+FROM ${ARTIFACTORY}/library/wordpress:${TAG_VERSION}-apache
