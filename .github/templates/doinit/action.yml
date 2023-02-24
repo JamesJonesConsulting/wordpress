@@ -18,9 +18,9 @@ runs:
         ls ~/.kube
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo update
-      with:
-        do_token: ${{ inputs.do_token }}
-        do_token: ${{ inputs.do_cluster }}
+      # with:
+      #   do_token: ${{ inputs.do_token }}
+      #   do_token: ${{ inputs.do_cluster }}
   # - name: deploy stack
   #   uses: somelibrary/deploy@master
   #   with:
