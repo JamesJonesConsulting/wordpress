@@ -35,6 +35,7 @@ jobs:
         run: |
           WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | head -n 10) )
           matrix=$(jq -R -s '{versions: .}' <<< "${WP_VERSIONS[@]}")
+          matrix=\"${matrix}\"
           echo $matrix
           echo $matrix | jq .
           # echo "::set-output name=matrix::$matrix"
