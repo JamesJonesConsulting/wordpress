@@ -1,4 +1,4 @@
-name: Deploy Wordpress container
+name: Build and Publish Wordpress containers
 
 on:
   push:
