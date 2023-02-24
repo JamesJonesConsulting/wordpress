@@ -1,0 +1,28 @@
+name: doinit
+
+# Were we can define the inputs that our action will accept
+inputs:
+  do_token: 
+    required: true
+  do_cluster:
+    required: true
+
+runs:
+  using: "composite"
+  # Defining the action steps(Just one step to be simple)
+  steps:
+    - name: Initialize Digitalocean cluster connection
+      run: |
+        doctl auth init --access-token ${{ inputs.do_token }}
+        doctl kubernetes cluster kubeconfig save ${{ inputs.do_cluster }}
+        ls ~/.kube
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo update
+      with:
+        do_token: ${{ inputs.do_token }}
+        do_token: ${{ inputs.do_cluster }}
+  # - name: deploy stack
+  #   uses: somelibrary/deploy@master
+  #   with:
+  #     version: ${{ inputs.version }}
+  #     namespace: ${{ inputs.namespace}}

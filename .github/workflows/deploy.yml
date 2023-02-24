@@ -29,27 +29,35 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      - name: Install RPM dependencies
-        run: |
-          doctl auth init --access-token ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          doctl kubernetes cluster kubeconfig save sgan-k8s
-          ls ~/.kube
-          helm repo add bitnami https://charts.bitnami.com/bitnami
-          helm repo update
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+      - name: Initialize Digital Ocean Environment
+        uses: "./.github/template/doinit" #Just need to pass the path from action
+       # Defining the variables required in our action
+        with:
+          do_token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          do_cluster: sgan-k8s
+      # - name: Install RPM dependencies
+      #   run: |
+      #     doctl auth init --access-token ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      #     doctl kubernetes cluster kubeconfig save sgan-k8s
+      #     ls ~/.kube
+      #     helm repo add bitnami https://charts.bitnami.com/bitnami
+      #     helm repo update
 
-          # dnf install -y podman-docker buildah skopeo docker-compose \
-          #   util-linux ansible-core openssh-clients krb5-devel krb5-libs krb5-workstation git jq unzip coreutils \
-          #   helm doctl kubernetes-client composer
-          # printf "\nStrictHostKeyChecking no\n" >> /etc/ssh/ssh_config
-          # pwd
-          # ls /__w
-          # ls --all /keys
-          # # eval $(ssh-agent); ssh-add <(echo "${GIT_SSH_KEY}" | base64 -d);
-          # git clone --branch stable git@git.yourmessagedelivered.com:2222:commerce_upsell.git
-        env:
-          # GIT_SSH_KEY: ${{ secrets.GITTOLITE_SSH_KEY }}
-          ANSIBLE_HOST_KEY_CHECKING: False
-          ANSIBLE_TIMEOUT: 60
-          # GIT_SSH_COMMAND: ssh -i /__w/_keys/id_rsa
+      #     # dnf install -y podman-docker buildah skopeo docker-compose \
+      #     #   util-linux ansible-core openssh-clients krb5-devel krb5-libs krb5-workstation git jq unzip coreutils \
+      #     #   helm doctl kubernetes-client composer
+      #     # printf "\nStrictHostKeyChecking no\n" >> /etc/ssh/ssh_config
+      #     # pwd
+      #     # ls /__w
+      #     # ls --all /keys
+      #     # # eval $(ssh-agent); ssh-add <(echo "${GIT_SSH_KEY}" | base64 -d);
+      #     # git clone --branch stable git@git.yourmessagedelivered.com:2222:commerce_upsell.git
+      #   env:
+      #     # GIT_SSH_KEY: ${{ secrets.GITTOLITE_SSH_KEY }}
+      #     ANSIBLE_HOST_KEY_CHECKING: False
+      #     ANSIBLE_TIMEOUT: 60
+      #     # GIT_SSH_COMMAND: ssh -i /__w/_keys/id_rsa
 
 
