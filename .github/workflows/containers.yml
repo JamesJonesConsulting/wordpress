@@ -37,5 +37,6 @@ jobs:
           matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}")
           echo $matrix
           echo $matrix | jq .
-          echo "::set-output name=matrix::$matrix"
+          # echo "::set-output name=matrix::$matrix"
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
