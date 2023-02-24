@@ -20,7 +20,7 @@ env:
   NEXUS_REGISTRY: nexus.jamesjonesconsulting.com:5443
 
 jobs:
-  generate-matrix:
+  matrix:
     runs-on: [ self-hosted, medium, build ]
     container:
       image: nexus.jamesjonesconsulting.com:5443/jamesjonesconsulting/podman-dind-like:latest
@@ -41,7 +41,7 @@ jobs:
           echo $matrix
           echo "matrix='$matrix'" >> $GITHUB_OUTPUT
   build-and-publish:
-    needs: generate-matrix
+    needs: matrix
     runs-on: [ self-hosted, medium, build ]
     container:
       image: nexus.jamesjonesconsulting.com:5443/jamesjonesconsulting/podman-dind-like:latest
@@ -51,7 +51,7 @@ jobs:
         password: ${{ secrets.HOME_NEXUS_DOCKER_PASSWORD }}
     strategy:
       fail-fast: false
-      matrix: ${{fromJson(needs.generate-matrix.outputs.matrix)}}
+      matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
     steps:
       # Downloads a copy of the code in your repository before running CI tests
       - name: Check out repository code
