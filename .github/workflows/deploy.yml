@@ -18,7 +18,7 @@ env:
   NEXUS_DOCKER_USER: ${{ secrets.HOME_NEXUS_DOCKER_USER }}
 
 jobs:
-  build-and-push:
+  deploy-wordpress:
     runs-on: [ self-hosted, medium, build ]
     container:
       image: nexus.jamesjonesconsulting.com:5443/jamesjonesconsulting/podman-dind-like:latest
