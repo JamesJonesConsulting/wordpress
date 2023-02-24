@@ -32,7 +32,7 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
       - name: Initialize Digital Ocean Environment
-        uses: "../.github/templates/doinit" #Just need to pass the path from action
+        uses: "./.github/templates/doinit" #Just need to pass the path from action
        # Defining the variables required in our action
         with:
           do_token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
