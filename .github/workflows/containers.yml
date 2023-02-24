@@ -38,7 +38,7 @@ jobs:
           WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | head -n 10) )
           # matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}" | jq -R -s)
           matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}")
-          matrix=\"${matrix}\"
+          matrix=\`${matrix}\`
           echo $matrix
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
   build-and-publish:
