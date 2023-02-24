@@ -1,1 +1,3 @@
-FROM docker.io/wordpress:6.1.1-apache
+ARG ARTIFACTORY
+ARG TAG_VERSION
+FROM ${ARTIFACTORY}/wordpress:${TAG_VERSION}-apache

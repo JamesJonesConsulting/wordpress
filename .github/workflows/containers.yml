@@ -16,9 +16,11 @@ on:
 
 env:
   NEXUS_DOCKER_USER: ${{ secrets.HOME_NEXUS_DOCKER_USER }}
+  NEXUS_PROXY_REGISTRY: nexus.jamesjonesconsulting.com:5444
+  NEXUS_REGISTRY: nexus.jamesjonesconsulting.com:5443
 
 jobs:
-  build-and-publish:
+  generate-matrix:
     runs-on: [ self-hosted, medium, build ]
     container:
       image: nexus.jamesjonesconsulting.com:5443/jamesjonesconsulting/podman-dind-like:latest
@@ -36,8 +38,59 @@ jobs:
           WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | head -n 10) )
           matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}" | jq -R -s)
           echo $matrix
-          # echo $matrix | jq -R -s
-          # matrix=\"${matrix}\"
-          # echo "::set-output name=matrix::$matrix"
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
-
+  build-and-publish:
+    needs: generate-matrix
+    runs-on: [ self-hosted, medium, build ]
+    container:
+      image: nexus.jamesjonesconsulting.com:5443/jamesjonesconsulting/podman-dind-like:latest
+      options: --userns=keep-id --group-add keep-groups --privileged --user root --security-opt seccomp=unconfined
+      credentials:
+        username: ${{ secrets.HOME_NEXUS_DOCKER_USER }}
+        password: ${{ secrets.HOME_NEXUS_DOCKER_PASSWORD }}
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.generate-matrix.outputs.matrix)}}
+    steps:
+      # Downloads a copy of the code in your repository before running CI tests
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Docker Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.NEXUS_REGISTRY }}
+          username: ${{ secrets.HOME_NEXUS_DOCKER_USER }}
+          password: ${{ secrets.HOME_NEXUS_DOCKER_PASSWORD }}
+      - name: Docker Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.NEXUS_PROXY_REGISTRY }}
+          username: ${{ secrets.HOME_NEXUS_DOCKER_USER }}
+          password: ${{ secrets.HOME_NEXUS_DOCKER_PASSWORD }}
+      # This requires docker buildx which podman doesn't support
+      # - name: Extract metadata (tags, labels) for Docker
+      #   id: meta
+      #   uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+      #   with:
+      #     images: ${{ matrix.registry }}/${{ env.IMAGE_NAME }}      
+      # - name: Build and push Docker images
+      #   uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: ${{ steps.meta.outputs.tags }}
+      #     labels: ${{ steps.meta.outputs.labels }}          
+      - name: Build the Docker image
+        run: |
+          IMAGE_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]') 
+          if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
+            VERSION=$GITHUB_REF_NAME
+          else
+            VERSION=$(echo "${GITHUB_REF_NAME}" | sed 's|/|-|g')
+          fi
+          podman build . --file Dockerfile --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:$VERSION" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.versions }}
+          podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:$VERSION"
+          if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
+            podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:$VERSION" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:latest"
+            podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:latest"
+          fi
