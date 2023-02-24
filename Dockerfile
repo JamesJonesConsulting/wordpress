@@ -1,0 +1,1 @@
+FROM docker.io/wordpress:6.1.1-apache
