@@ -28,6 +28,8 @@ jobs:
       credentials:
         username: ${{ secrets.HOME_NEXUS_DOCKER_USER }}
         password: ${{ secrets.HOME_NEXUS_DOCKER_PASSWORD }}
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
