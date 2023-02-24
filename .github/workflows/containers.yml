@@ -31,3 +31,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
+      - id: set-matrix
+        run: |
+          WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | head -n 10) )
+          matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}")
+          echo $matrix
+          echo $matrix | jq .
+          echo "::set-output name=matrix::$matrix"
+
