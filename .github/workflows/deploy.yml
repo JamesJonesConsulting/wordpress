@@ -34,7 +34,6 @@ jobs:
           doctl auth init --access-token ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           doctl kubernetes cluster kubeconfig save sgan-k8s
           ls ~/.kube
-          helm init --client-only
           helm repo add bitnami https://charts.bitnami.com/bitnami
           helm repo update
 
