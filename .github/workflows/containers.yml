@@ -39,7 +39,7 @@ jobs:
           # matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}" | jq -R -s)
           matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}" | jq -c .)
           echo $matrix
-          echo "matrix='$matrix'" >> $GITHUB_OUTPUT
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
   build-and-publish:
     needs: matrix
     runs-on: [ self-hosted, medium, build ]
