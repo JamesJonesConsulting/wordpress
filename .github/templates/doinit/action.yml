@@ -12,6 +12,7 @@ runs:
   # Defining the action steps(Just one step to be simple)
   steps:
     - name: Initialize Digitalocean cluster connection
+      shell: bash
       run: |
         doctl auth init --access-token ${{ inputs.do_token }}
         doctl kubernetes cluster kubeconfig save ${{ inputs.do_cluster }}
