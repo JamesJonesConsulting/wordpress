@@ -39,7 +39,7 @@ jobs:
         run: |
           WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | head -n 10) )
           # matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}" | jq -R -s)
-          matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}" | jq -c .)
+          matrix=$(jq -s '{versions: ., types: ["apache","fpm","fpm-alpine"]}' <<< "${WP_VERSIONS[@]}" | jq -c .)
           echo $matrix
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
   check-matrix:
@@ -99,9 +99,9 @@ jobs:
           else
             VERSION=$(echo "${GITHUB_REF_NAME}" | sed 's|/|-|g')
           fi
-          podman build . --file Dockerfile --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:$VERSION" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.versions }}
-          podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:$VERSION"
+          podman build . --file Dockerfile --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:$VERSION" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.versions }} --build-arg TAG_TYPE=${{ matrix.types }}
+          podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:$VERSION"
           if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
-            podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:$VERSION" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:latest"
-            podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.versions }}:latest"
+            podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:$VERSION" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:latest"
+            podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:latest"
           fi
