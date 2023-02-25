@@ -43,8 +43,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
       - id: set-matrix
         run: |
-          WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | head -n ${{ env.version_count }}) )
-          echo -n "$WP_VERSIONS" | awk '/^${{ env.version_filter }}/'
+          WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | awk '/^"${{ env.version_filter }}/' | head -n ${{ env.version_count }}) )
           matrix=$(jq -s '{version: ., type: ["apache","fpm","fpm-alpine"]}' <<< "${WP_VERSIONS[@]}" | jq -c .)
           echo $matrix
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
