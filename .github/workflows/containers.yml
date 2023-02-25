@@ -18,7 +18,13 @@ env:
   NEXUS_DOCKER_USER: ${{ secrets.HOME_NEXUS_DOCKER_USER }}
   NEXUS_PROXY_REGISTRY: nexus.jamesjonesconsulting.com:5444
   NEXUS_REGISTRY: nexus.jamesjonesconsulting.com:5443
-
+  version_filter: 6
+  version_count: 10
+  matrix_options: |
+    types:
+      - apache
+      - fpm
+      - fpm-alpine
 jobs:
   matrix:
     runs-on: [ self-hosted, medium, build ]
@@ -37,8 +43,8 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
       - id: set-matrix
         run: |
-          WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | head -n 10) )
-          # matrix=$(jq -s '{versions: .}' <<< "${WP_VERSIONS[@]}" | jq -R -s)
+          WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | head -n ${{ env.version_count }}) )
+          echo -n "$WP_VERSIONS" | awk '/^${{ env.version_filter }}/'
           matrix=$(jq -s '{versions: ., types: ["apache","fpm","fpm-alpine"]}' <<< "${WP_VERSIONS[@]}" | jq -c .)
           echo $matrix
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
@@ -62,6 +68,7 @@ jobs:
         password: ${{ secrets.HOME_NEXUS_DOCKER_PASSWORD }}
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
     steps:
       # Downloads a copy of the code in your repository before running CI tests
@@ -100,7 +107,7 @@ jobs:
           else
             VERSION=$(echo "${GITHUB_REF_NAME}" | sed 's|/|-|g')
           fi
-          podman build . --file Dockerfile --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:$VERSION" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.versions }} --build-arg TAG_TYPE=${{ matrix.types }}
+          podman build --file Dockerfile.${{ matrix.versions }} --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:$VERSION" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.versions }} --build-arg TAG_TYPE=${{ matrix.types }}
           podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:$VERSION"
           if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
             podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:$VERSION" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.types }}/${{ matrix.versions }}:latest"
