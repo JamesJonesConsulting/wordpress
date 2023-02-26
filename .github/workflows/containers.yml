@@ -54,7 +54,7 @@ jobs:
           # WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | awk '/^"${{ env.version_filter }}/' | head -n ${{ env.version_count }}) )
           # matrix=$(jq -s '{version: .}' <<< "${WP_VERSIONS[@]}" | jq -c .)
           matrix_options=$(echo -n "${{ env.matrix_options}}" | yq -r -o=json -)
-          matrix=$(jq -c --slurp 'add' <(echo "${{ steps.github-tags.outputs.tags }}") <(echo "$matrix_options"))
+          matrix=$(jq -c --slurp 'add' <(echo '${{ steps.github-tags.outputs.tags }}') <(echo "$matrix_options"))
           echo $matrix
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
   check-matrix:
