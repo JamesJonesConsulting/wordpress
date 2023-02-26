@@ -49,7 +49,7 @@ jobs:
           matrix_options=$(echo -n "${{ env.matrix_options}}" | yq -r -o=json -)
           matrix=$(jq --slurp 'add' <(echo "$matrix") <(echo "$matrix_options"))
           echo $matrix
-          echo -n "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
   check-matrix:
     runs-on: [ self-hosted, medium, build ]
     needs: matrix
