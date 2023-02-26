@@ -21,7 +21,7 @@ env:
   version_filter: 6
   version_count: 10
   matrix_options: |
-    types:
+    type:
       - apache
       - fpm
       - fpm-alpine
@@ -43,12 +43,13 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
       - id: set-matrix
         run: |
-          matrix_options=$(echo -n "${{ env.matrix_options}}" | yq -r -o=json -)
           WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | awk '/^"${{ env.version_filter }}/' | head -n ${{ env.version_count }}) )
-          matrix=$(jq -s '{version: ., type: ["apache","fpm","fpm-alpine"]}' <<< "${WP_VERSIONS[@]}" | jq -c .)
-          jq --slurp 'add' <(echo "$matrix") <(echo "$matrix_options")
+          # matrix=$(jq -s '{version: ., type: ["apache","fpm","fpm-alpine"]}' <<< "${WP_VERSIONS[@]}" | jq -c .)
+          matrix=$(jq -s '{version: .}' <<< "${WP_VERSIONS[@]}" | jq -c .)
+          matrix_options=$(echo -n "${{ env.matrix_options}}" | yq -r -o=json -)
+          matrix=$(jq --slurp 'add' <(echo "$matrix") <(echo "$matrix_options"))
           echo $matrix
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo -n "matrix=$matrix" >> $GITHUB_OUTPUT
   check-matrix:
     runs-on: [ self-hosted, medium, build ]
     needs: matrix
