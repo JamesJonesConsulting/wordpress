@@ -51,10 +51,10 @@ jobs:
         shell: bash
       - id: set-matrix
         run: |
-          WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | awk '/^"${{ env.version_filter }}/' | head -n ${{ env.version_count }}) )
-          matrix=$(jq -s '{version: .}' <<< "${WP_VERSIONS[@]}" | jq -c .)
+          # WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | awk '/^"${{ env.version_filter }}/' | head -n ${{ env.version_count }}) )
+          # matrix=$(jq -s '{version: .}' <<< "${WP_VERSIONS[@]}" | jq -c .)
           matrix_options=$(echo -n "${{ env.matrix_options}}" | yq -r -o=json -)
-          matrix=$(jq -c --slurp 'add' <(echo "$matrix") <(echo "$matrix_options"))
+          matrix=$(jq -c --slurp 'add' <(echo "${{ steps.github-tags.outputs.tags }}") <(echo "$matrix_options"))
           echo $matrix
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
   check-matrix:
@@ -116,9 +116,9 @@ jobs:
           else
             VERSION=$(echo "${GITHUB_REF_NAME}" | sed 's|/|-|g')
           fi
-          podman build --file Dockerfile.${{ matrix.type }} --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.version }}:$VERSION" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.version }} --build-arg TAG_TYPE=${{ matrix.type }}
-          podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.version }}:$VERSION"
+          podman build --file Dockerfile.${{ matrix.type }} --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:$VERSION" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.tags }} --build-arg TAG_TYPE=${{ matrix.type }}
+          podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:$VERSION"
           if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
-            podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.version }}:$VERSION" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.version }}:latest"
-            podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.version }}:latest"
+            podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:$VERSION" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
+            podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
           fi
