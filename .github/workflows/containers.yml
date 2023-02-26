@@ -47,7 +47,7 @@ jobs:
           # matrix=$(jq -s '{version: ., type: ["apache","fpm","fpm-alpine"]}' <<< "${WP_VERSIONS[@]}" | jq -c .)
           matrix=$(jq -s '{version: .}' <<< "${WP_VERSIONS[@]}" | jq -c .)
           matrix_options=$(echo -n "${{ env.matrix_options}}" | yq -r -o=json -)
-          matrix=$(jq --slurp 'add' <(echo "$matrix") <(echo "$matrix_options"))
+          matrix=$(jq -c --slurp 'add' <(echo "$matrix") <(echo "$matrix_options"))
           echo $matrix
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
   check-matrix:
