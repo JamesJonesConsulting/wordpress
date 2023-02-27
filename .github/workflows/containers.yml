@@ -1,18 +1,7 @@
 name: Build and Publish Wordpress containers
 
 on:
-  push:
-    branches: 
-      - 'release/**'
-      - 'feature/**'
-      - develop
-    tags:
-      - '*'
-  pull_request:
-    branches: 
-      - main
-      - 'release/**'
-      - develop
+  workflow_dispatch: {}
 
 env:
   NEXUS_DOCKER_USER: ${{ secrets.HOME_NEXUS_DOCKER_USER }}
@@ -47,12 +36,9 @@ jobs:
           github-repo: 'Wordpress/Wordpress'
           github-max-tags: ${{ env.version_count }}
           github-filter-tags: ${{ env.version_filter }}
-      - run: echo "${{ steps.github-tags.outputs.tags }}"
-        shell: bash
       - id: set-matrix
+        name: Combine Tag list with options env variable in YAML format
         run: |
-          # WP_VERSIONS=( $(curl --silent "https://api.github.com/repos/Wordpress/Wordpress/tags" | jq '.[] | .name' | awk '/^"${{ env.version_filter }}/' | head -n ${{ env.version_count }}) )
-          # matrix=$(jq -s '{version: .}' <<< "${WP_VERSIONS[@]}" | jq -c .)
           matrix_options=$(echo -n "${{ env.matrix_options}}" | yq -r -o=json -)
           matrix=$(jq -c --slurp 'add' <(echo '${{ steps.github-tags.outputs.tags }}') <(echo "$matrix_options"))
           echo $matrix
@@ -107,18 +93,20 @@ jobs:
       #     context: .
       #     push: true
       #     tags: ${{ steps.meta.outputs.tags }}
-      #     labels: ${{ steps.meta.outputs.labels }}          
+      #     labels: ${{ steps.meta.outputs.labels }}    
+      - id: container-tag
+        uses: JamesJonesConsulting/github.image-tag-from-git.action@main
       - name: Build the Docker image
         run: |
           IMAGE_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]') 
+          # if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
+          #   VERSION=$GITHUB_REF_NAME
+          # else
+          #   VERSION=$(echo "${GITHUB_REF_NAME}" | sed 's|/|-|g')
+          # fi
+          podman build --file Dockerfile.${{ matrix.type }} --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.tags }} --build-arg TAG_TYPE=${{ matrix.type }}
+          podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}"
           if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
-            VERSION=$GITHUB_REF_NAME
-          else
-            VERSION=$(echo "${GITHUB_REF_NAME}" | sed 's|/|-|g')
-          fi
-          podman build --file Dockerfile.${{ matrix.type }} --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:$VERSION" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.tags }} --build-arg TAG_TYPE=${{ matrix.type }}
-          podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:$VERSION"
-          if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
-            podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:$VERSION" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
+            podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
             podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
           fi

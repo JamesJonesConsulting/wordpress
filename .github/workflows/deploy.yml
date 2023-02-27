@@ -1,18 +1,14 @@
 name: Deploy Wordpress container
 
 on:
-  push:
-    branches: 
-      - 'release/**'
-      - 'feature/**'
-      - develop
-    tags:
-      - '*'
-  pull_request:
-    branches: 
-      - main
-      - 'release/**'
-      - develop
+  workflow_dispatch:
+    inputs:
+      deploy-app:
+        required: true
+        type: choice
+        description: Select the Wordpress instance to deploy
+        options: 
+          - riftspan
 
 env:
   NEXUS_DOCKER_USER: ${{ secrets.HOME_NEXUS_DOCKER_USER }}
