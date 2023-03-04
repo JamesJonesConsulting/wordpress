@@ -99,14 +99,13 @@ jobs:
       - name: Build the Docker image
         run: |
           IMAGE_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]') 
-          # if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
-          #   VERSION=$GITHUB_REF_NAME
-          # else
-          #   VERSION=$(echo "${GITHUB_REF_NAME}" | sed 's|/|-|g')
-          # fi
           podman build --file Dockerfile.${{ matrix.type }} --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.tags }} --build-arg TAG_TYPE=${{ matrix.type }}
-          podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}"
-          if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
-            podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
-            podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
+          if [[ "$GITHUB_REF" =~ ^refs/pull.* ]]; then
+            echo "Pull requests do not get published. Only for testing"
+          else
+            podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}"
+            if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
+              podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
+              podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
+            fi
           fi
