@@ -100,7 +100,7 @@ jobs:
         run: |
           IMAGE_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]') 
           podman build --file Dockerfile.${{ matrix.type }} --tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}" --build-arg ARTIFACTORY=${{ env.NEXUS_PROXY_REGISTRY }} --build-arg TAG_VERSION=${{ matrix.tags }} --build-arg TAG_TYPE=${{ matrix.type }}
-          podman rmi --no-prune FROM ${{ env.NEXUS_PROXY_REGISTRY }}/library/wordpress:{{ matrix.tags }}-${{ matrix.type }}
+          podman rmi --no-prune ${{ env.NEXUS_PROXY_REGISTRY }}/library/wordpress:{{ matrix.tags }}-${{ matrix.type }}
           if [[ "$GITHUB_REF" =~ ^refs/pull.* ]]; then
             echo "Pull requests do not get published. Only for testing"
           else
