@@ -105,6 +105,7 @@ jobs:
           if [[ "$GITHUB_REF" =~ ^refs/pull.* ]]; then
             echo "Pull requests do not get published. Only for testing"
           else
+            podman logout ${{ env.NEXUS_PROXY_REGISTRY }}
             podman push "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}"
             if [[ "$GITHUB_REF" =~ ^refs/tags.* ]]; then
               podman tag "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:${{ steps.container-tag.outputs.tag }}" "${{ env.NEXUS_REGISTRY }}/$IMAGE_NAME/${{ matrix.type }}/${{ matrix.tags }}:latest"
